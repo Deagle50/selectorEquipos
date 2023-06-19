@@ -9,22 +9,29 @@
       .bodyNegro {
         background-color: #333333;
         color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
 
       .bodyBlanco {
-        background-color: #c3c3c3;
+        background-color: #ffffff;
         color: black;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
 
       .padre {
-        margin: 8px 500px;
+        margin: 8px;
         padding: 8px;
         border: 1px solid black;
         border-radius: 8px;
+        width: 300px;
       }
 
       .fila {
-        display: flex;
+        /* display: flex; */
         margin: 8px;
         padding: 8px;
         border: 1px solid black;
@@ -116,9 +123,15 @@
   ></script>
 </html>
 <script>
-  const url = "http://172.16.248.249:3000/";
+  const ip = "172.16.248.100";
+  const url = "http://" + ip + ":4646/";
 
   var color = "blanco";
+
+  const capitanes = [
+    { nombre: "Kulentxo", color: "negro" },
+    { nombre: "Jenni", color: "blanco" },
+  ];
 
   $(document).ready(
     (inicio = async () => {
@@ -126,7 +139,7 @@
       mostrarJugadores(jugadores);
       cambiarEstiloJugadores(jugadores);
 
-      setInterval(ciclo, 1000);
+      setInterval(ciclo, 100);
     })
   );
 
@@ -139,6 +152,7 @@
   const obtenerJugadores = async () => {
     const response = await fetch(url + "jugadores");
     const jugadores = await response.json();
+    cargarCapitan();
     return jugadores;
   };
 
@@ -146,17 +160,25 @@
     let html = `<div class="padre">
             <h2 style="text-align: center">Selección de jugadores</h2>
             <div style="width:100%;display:flex;justify-content:center">
-            <label class="switch">
-                <input type="checkbox" id="selector">
-                <span class="slider round" ></span>
-            </label>
+            <label>Capitán: &nbsp;</label><span id="nombreCapitan"></span>
+            </div>
+            <div style="width:100%;display:flex;justify-content:center">
+              <label class="switch">
+                  <input type="checkbox" id="selector">
+                  <span class="slider round" ></span>
+              </label>
             </div>
         `;
-    jugadores.forEach((element) => {
+    jugadores.forEach((element, index) => {
+      let id0 = element[0].nombre.replace(/ /g,'');
+      let id1 = element[1].nombre.replace(/ /g,'');
       html += `
-      <div class="fila" id="fila${element.nombre}" role="button">
-        <div id="tNombre${element.nombre}">
-            ${element.nombre}
+      <div style="display:flex;flex-direction-column;" id="fila${index}" role="button">
+        <div style="flex:1;text-align:center" class="fila" id="tNombre${id0}" fila="${index}" puesto="${0}">
+            ${element[0].nombre}
+        </div>
+        <div  style="flex:1;text-align:center" class="fila" id="tNombre${id1}" fila="${index}" puesto="${1}">
+            ${element[1].nombre}
         </div>
       </div>`;
     });
@@ -164,7 +186,7 @@
     $("body").html(html);
 
     $(`#selector`).on("change", () => {
-      console.log($("#selector").is(":checked"));
+      //console.log($("#selector").is(":checked"));
       if (color == "blanco") {
         color = "negro";
         $("body").removeClass();
@@ -176,12 +198,15 @@
         $("body").addClass("bodyBlanco");
         $(".fila").css("border-color", "black");
       }
+      cargarCapitan();
     });
 
     $(".fila").on(
       "click",
       (funcion = async (item) => {
-        let name = $(item.target).children(0).html().trim();
+        let fila = $(item.target).attr("fila");
+        let puesto = $(item.target).attr("puesto");
+        let name = $(item.target).html().trim();
         await fetch(url + "cambiar", {
           method: "POST",
           headers: {
@@ -190,23 +215,49 @@
           },
           body: JSON.stringify({ nombre: name, color: color }),
         });
+        let res = $(`[fila='${fila}'][puesto='${puesto == 0 ? 1 : 0}']`);
+        //console.log(name + " " + color);
+        name = $(res).html().trim();
+        color2 = color == "blanco" ? "negro" : "blanco";
+        //console.log(name + " " + color2);
+        await fetch(url + "cambiar", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ nombre: name, color: color2 }),
+        });
       })
     );
   };
 
   const actualizarJugadores = (jugadores) => {
     jugadores.forEach((element) => {
-      $(`#tColor${element.nombre}`).html(element.color);
+      $(`#tColor${element[0].nombre.replace(/ /g,'')}`).html(element[0].color);
+      $(`#tColor${element[1].nombre.replace(/ /g,'')}`).html(element[1].color);
     });
   };
 
   const cambiarEstiloJugadores = (jugadores) => {
     jugadores.forEach((element) => {
       if (element.color != "") {
-        $(`#fila${element.nombre}`).removeClass();
-        $(`#fila${element.nombre}`).addClass("fila");
-        $(`#fila${element.nombre}`).addClass(element.color);
+        //console.log(element);
+        $(`#tNombre${element[0].nombre.replace(/ /g,'')}`).removeClass();
+        $(`#tNombre${element[0].nombre.replace(/ /g,'')}`).addClass("fila");
+        $(`#tNombre${element[0].nombre.replace(/ /g,'')}`).addClass(element[0].color);
+        $(`#tNombre${element[1].nombre.replace(/ /g,'')}`).removeClass();
+        $(`#tNombre${element[1].nombre.replace(/ /g,'')}`).addClass("fila");
+        $(`#tNombre${element[1].nombre.replace(/ /g,'')}`).addClass(element[1].color);
       }
     });
+  };
+
+  const cargarCapitan = () => {
+    if (capitanes[0].color == color) {
+      $(`#nombreCapitan`).html(capitanes[0].nombre);
+    } else {
+      $(`#nombreCapitan`).html(capitanes[1].nombre);
+    }
   };
 </script>
