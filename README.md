@@ -3,6 +3,6 @@ Selector de equipos en el html, con una mini api sin bbdd. Habría que cambiar l
 
 Para instalarla, simplemente 
 - Tener node.js y npm instalado en el equipo https://nodejs.org/en/download, 
-- Añadirlo al path si hace falta, 
+- Añadir Node al path si hace falta
 - Reiniciar equipo/consola de comandos
 - Lanzar el comando "node .\app.js" estando dentro
